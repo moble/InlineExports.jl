@@ -2,7 +2,9 @@ module InlineExports
 
 import Base: @__doc__
 
-export @export
+include("NoExport.jl")
+
+export @export, @public
 
 quote
     """
@@ -31,20 +33,55 @@ quote
     ```
     """
     macro $(Symbol("export"))(expr::Expr)
-        r = handle(expr)
-        if r isa Symbol
-            return quote
-                export $(esc(r))
-                @__doc__ $(esc(expr))
-            end
-        else
-            return quote
-                export $(map(esc, r)...)
-                @__doc__ $(esc(expr))
-            end
-        end
+        return handle(expr, :export)
     end
 end |> eval
+
+if VERSION < v"1.11"
+    using .NoExport: @public
+else
+    """
+        @public
+
+    Return the expression with all bindings marked as public.
+
+    ```
+    julia> module M
+               using InlineExports
+               @public begin
+                   const a = 2
+                   abstract type S <: Number end
+                   struct T <: S
+                       val
+                   end
+               end
+               @public f(x::TT) where {TT<:S} = x.val^2
+           end
+    M
+
+    julia> using .M
+
+    julia> M.f(M.T(M.a))
+    4
+    ```
+    """
+    macro public(expr::Expr)
+        return handle(expr, :public)
+    end
+end
+
+function handle(expr::Expr, export_or_public::Symbol)
+    r = handle(expr)
+    ep = if r isa Symbol
+        Expr(export_or_public, r)
+    else
+        Expr(export_or_public, r...)
+    end
+    return esc(quote
+        $ep
+        Base.@__doc__ $expr
+    end)
+end
 
 handle(::Any) = nothing
 handle(x::Symbol) = x
@@ -64,7 +101,5 @@ handle(::Val{:<:}, expr) = handle(expr.args[1])
 handle(::Val{:curly}, expr) = handle(expr.args[1])
 handle(::Val{:call}, expr) = handle(expr.args[1])
 handle(::Val{:macrocall}, expr) = filter(x -> x !== nothing, map(handle, expr.args[3:end]))
-
-include("NoExport.jl")
 
 end # module

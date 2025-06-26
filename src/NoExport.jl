@@ -2,7 +2,7 @@ module NoExport
 
 import Base: @__doc__
 
-export @export
+export @export, @public
 
 quote
     """
@@ -14,5 +14,14 @@ quote
         return esc(expr)
     end
 end |> eval
+
+"""
+    @public
+
+No-op.  Used to disable inline public macro.
+"""
+macro public(expr::Expr)
+    return esc(expr)
+end
 
 end # module
