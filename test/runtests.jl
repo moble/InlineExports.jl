@@ -18,7 +18,9 @@ using InlineExports
 @export begin
     M2f(a) = a^2
     M2a = 2
+    "docstring M2b"
     const M2b = 3.0
+    @doc raw"docstring M2c ``\alpha``"
     M2c = 7im
 end
 
@@ -51,7 +53,7 @@ end
 @export function M2h end
 
 @doc raw"""
-    docstring ``\alpha``
+    docstring ``\beta``
 """
 @export function M2k end
 
@@ -66,6 +68,8 @@ using .M2
     @test M2f(M2t) == M2f(M2a)
     @test M2g(M2tp) == M2f(M2c)
     if VERSION >= v"1.11"
+        @test Base.Docs.hasdoc(M2, :M2b)
+        @test Base.Docs.hasdoc(M2, :M2c)
         @test Base.Docs.hasdoc(M2, :M2h)
         @test Base.Docs.hasdoc(M2, :M2k)
     end
@@ -91,7 +95,9 @@ using InlineExports
 @public begin
     M4f(a) = a^2
     M4a = 2
+    "docstring M2b"
     const M4b = 3.0
+    @doc raw"docstring M4c ``\alpha``"
     M4c = 7im
 end
 
@@ -168,6 +174,8 @@ using .M4
         @test Base.ispublic(M4, :M4T)
         @test Base.ispublic(M4, :M4TP)
         @test Base.ispublic(M4, Symbol("@M4macro"))
+        @test Base.Docs.hasdoc(M4, :M4b)
+        @test Base.Docs.hasdoc(M4, :M4c)
         @test Base.Docs.hasdoc(M4, :M4h)
         @test Base.Docs.hasdoc(M4, :M4k)
     end

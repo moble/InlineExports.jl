@@ -100,6 +100,15 @@ handle(::Union{Val{:abstract}, Val{:primitive}}, expr) = handle(expr.args[1])
 handle(::Val{:<:}, expr) = handle(expr.args[1])
 handle(::Val{:curly}, expr) = handle(expr.args[1])
 handle(::Val{:call}, expr) = handle(expr.args[1])
-handle(::Val{:macrocall}, expr) = filter(x -> x !== nothing, map(handle, expr.args[3:end]))
+function handle(::Val{:macrocall}, expr)
+    if expr.args[1]==Symbol("@doc") || (expr.args[1] == Core.GlobalRef(Core, Symbol("@doc")))
+        if length(expr.args) != 4
+            error("@doc expression found with $(length(expr.args)) args:\n$expr")
+        end
+        handle(expr.args[4])
+    else
+        filter(x -> x !== nothing, map(handle, expr.args[3:end]))
+    end
+end
 
 end # module
